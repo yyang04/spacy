@@ -6,3 +6,4 @@ python -m spacy download zh_core_web_trf
 python -m spacy download en_core_web_trf
 python -m spacy download fr_dep_news_trf
 python -m spacy download fr_core_news_sm
+pip install googletrans pandas -i https://pypi.tuna.tsinghua.edu.cn/simple
