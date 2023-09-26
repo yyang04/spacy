@@ -4,8 +4,12 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import Mapped
+import logging
 import json
 from typing import List
+
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.ERROR)
 
 
 class Base(DeclarativeBase):
@@ -49,22 +53,23 @@ class DataBase:
     def createTable(self):
         Base.metadata.create_all(self.engine)
 
+    def search(self, w):
+        word = self.session.query(Word).filter_by(word=w).first()
+        if word:
+            print(f"Word: {word.word}")
+            for definition in word.definitions:
+                print(f"Definition: {definition.definition}")
+                for sentence in definition.sentences:
+                    print(f"Sentence: {sentence.sentence}")
+        return w
+
     def insert(self, instance):
+        if isinstance(instance, list):
+            for ins in instance:
+                self.session.add(ins)
+            self.session.commit()
         self.session.add(instance)
         self.session.commit()
-
-
-
-
-
-# user = User(name='Alice', age=25)
-# session.add(user)
-# session.commit()
-#
-#
-# users = session.query(User).all()
-# for user in users:
-#     print(user.name, user.age)
 
 
 if __name__ == '__main__':

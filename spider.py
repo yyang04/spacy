@@ -1,11 +1,7 @@
-import io
-import json
-
 import requests
 import browser_cookie3
 import logging
 from lxml import etree
-from typing import List
 from paddleocr import PaddleOCR
 from urllib.parse import quote
 
@@ -83,9 +79,10 @@ class Spider:
 if __name__ == '__main__':
     db = DataBase()
     spider = Spider()
-    word = spider.request("éviter")
+    # word = spider.request("éviter")
+    db.search("éviter")
     # db.createTable()
-    db.insert(word)
+    # db.insert(word)
 
     print(1)
     # frenchWord = spider.classTranfer(response)
