@@ -1,75 +1,100 @@
 import io
+import json
 
 import requests
 import browser_cookie3
+import logging
 from lxml import etree
 from typing import List
 from paddleocr import PaddleOCR
 from urllib.parse import quote
+
 from utils.pic2word import pic2word
-
-
-class Word:
-    def __init__(self):
-        self.name = None  # 词汇名
-        self.exp: List[Exp] = []  # 词解释
-
-
-class Exp:
-    def __init__(self):
-        self.cara = None  # 词性
-        self.key = None  # 翻译
-        self.eg: List[str] = []  # 例句
+from utils.database import Word, Definition, Sentence, DataBase
+from typing import Optional
 
 
 class Spider:
     def __init__(self):
         self.ocr = PaddleOCR(use_angle_cls=True, lang="ch")
         self.cookies = browser_cookie3.chrome()
+        self.img2Cha = {}
 
-    def request(self, w) -> Word:
-        url = f"https://www.frdic.com/dicts/fr/{quote(w)}"
-        response = requests.get(url, cookies=self.cookies)
-        html = etree.HTML(response.text)
-        data = html.xpath("//div[@id='ExpFCChild'][1]/*")
-        html.xpath("//div[@id='ExpFCChild'][1]/*")[6].xpath("./* | ./text()")
+    def request(self, wordStr) -> Optional[Word]:
+        url = f"https://www.frdic.com/dicts/fr/{quote(wordStr)}"
+        resp = requests.get(url, cookies=self.cookies)
+        if resp.status_code != 200:
+            logging.error(f"Network Error Word: {wordStr}")
+            return
+
         word = Word()
-        word.name = w
-        exps: List[Exp] = []
+        word.word = wordStr
+        html = etree.HTML(resp.text)
+        data = html.xpath("//div[@id='ExpFCChild'][1]/*")
 
         for elem in data:
-            if hasattr(elem, 'attrib'):
-                if elem.attrib.get('class') == 'cara':
-                    exp = Exp()
-                    exp.cara = elem.text
-                    exps.append(exp)
-                if elem.attrib.get('class') == 'exp':
-                    exps[-1].key = elem.text
-                if elem.attrib.get('class') == 'eg':
-                    egs = elem.xpath("./* | ./text()")
-                    for eg in egs:
-                        if isinstance(eg, str):
-                            exps[-1].eg.append(eg)
-                        elif eg.tag == 'br':
-                            exps[-1].eg.append("")
-                        elif eg.tag == 'img':
-                            url = eg.attrib.get('src')
-                            exps[-1].eg[-1] += pic2word(self.ocr, url, self.cookies)
-        for exp in exps:
-            new_eg = []
-            for eg in exp.eg:
-                if eg != "":
-                    new_eg.append(eg)
-            exp.eg = new_eg
-        word.exp = exps
+            if elem.attrib.get('class') == 'cara':
+                definition = Definition()
+                definition.pos = elem.text
+                word.definitions.append(definition)
 
+            if elem.attrib.get('class') == 'exp':
+                egs = elem.xpath('./* | ./text()')
+                word.definitions[-1].definition = ''
+                for eg in egs:
+                    if isinstance(eg, str):
+                        word.definitions[-1].definition += eg
+                    elif eg.tag == 'img':
+                        url = eg.attrib.get('src')
+                        char = self.img2Cha.get(url, pic2word(self.ocr, url, self.cookies))
+                        if char:
+                            self.img2Cha[url] = char
+                        word.definitions[-1].definition += char
+
+            if elem.attrib.get('class') == 'eg':
+                egs = elem.xpath("./* | ./text()")
+                sentence = Sentence()
+                sentence.sentence = ""
+                word.definitions[-1].sentences.append(sentence)
+
+                for eg in egs:
+                    if isinstance(eg, str):
+                        word.definitions[-1].sentences[-1].sentence += eg
+                    elif eg.tag == 'br':
+                        sentence = Sentence()
+                        sentence.sentence = ""
+                        word.definitions[-1].sentences.append(sentence)
+                    elif eg.tag == 'img':
+                        url = eg.attrib.get('src')
+                        char = self.img2Cha.get(url, pic2word(self.ocr, url, self.cookies))
+                        if char:
+                            self.img2Cha[url] = char
+                        word.definitions[-1].sentences[-1].sentence += char
+
+        for definition in word.definitions:
+            new_sentence = []
+            for sentence in definition.sentences:
+                if sentence.sentence != "":
+                    new_sentence.append(sentence)
+            definition.sentences = new_sentence
         return word
 
 
 if __name__ == '__main__':
-
+    db = DataBase()
     spider = Spider()
-    spider.request("éviter")
+    word = spider.request("éviter")
+    # db.createTable()
+    db.insert(word)
+
+    print(1)
+    # frenchWord = spider.classTranfer(response)
+    # db.insertFrenchWord([frenchWord])
+
+
+
+
+
 
 
 
