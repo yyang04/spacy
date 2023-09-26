@@ -34,7 +34,7 @@ class Spider:
                 if elem.attrib.get('class') == 'cara':
                     pos = elem.text
 
-                if elem.attrib.get('class') == 'exp':
+                elif elem.attrib.get('class') == 'exp':
                     exps = elem.xpath('./* | ./text()')
                     # 初始化第一个定义并赋值
                     definition = Definition()
@@ -79,13 +79,13 @@ class Spider:
                             definition.pos = pos
                             definition.definition = ''
 
-                        elif exp.attrib.get('text') == '常见用法':
+                        elif exp.text == '常见用法':
                             break
 
                     if not FOUND:
                         word.definitions.append(definition)
 
-                if elem.attrib.get('class') == 'eg':
+                elif elem.attrib.get('class') == 'eg':
                     egs = elem.xpath("./* | ./text()")
                     sentence = Sentence()
                     sentence.sentence = ""
@@ -105,7 +105,7 @@ class Spider:
                                 self.img2Cha[url] = char
                             word.definitions[-1].sentences[-1].sentence += char
 
-                if elem.attrib.get('text') == '常见用法':
+                elif elem.text == '常见用法':
                     break
 
             for definition in word.definitions:
