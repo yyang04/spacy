@@ -21,7 +21,7 @@ class Word(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     word: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
 
-    definitions: Mapped[List['Definition']] = relationship(back_populates='word')  # ClassName,ColumnName
+    definitions: Mapped[List['Definition']] = relationship(back_populates='word', cascade='delete-orphan')  # ClassName,ColumnName
 
 
 class Definition(Base):
@@ -32,7 +32,7 @@ class Definition(Base):
     pos: Mapped[str] = mapped_column(String(50), nullable=True)
 
     word_id: Mapped[int] = mapped_column(ForeignKey('word.id'))  # tableName.columnName
-    sentences: Mapped[List['Sentence']] = relationship(back_populates='definition')
+    sentences: Mapped[List['Sentence']] = relationship(back_populates='definition', cascade='delete-orphan')
 
 
 class Sentence(Base):
@@ -68,8 +68,9 @@ class DataBase:
             for ins in instance:
                 self.session.add(ins)
             self.session.commit()
-        self.session.add(instance)
-        self.session.commit()
+        else:
+            self.session.add(instance)
+            self.session.commit()
 
 
 if __name__ == '__main__':
