@@ -12,7 +12,7 @@ from typing import Optional
 
 class Spider:
     def __init__(self):
-        self.ocr = PaddleOCR(use_angle_cls=True, lang="ch", debug=False)
+        self.ocr = PaddleOCR(use_angle_cls=True, lang="ch")
         self.cookies = browser_cookie3.chrome()
         self.img2Cha = {}
 
@@ -29,8 +29,8 @@ class Spider:
             html = etree.HTML(resp.text)
             data = html.xpath("//div[@id='ExpFCChild'][1]/*")
 
+            pos = ""
             for elem in data:
-                pos = ""
                 if elem.attrib.get('class') == 'cara':
                     pos = elem.text
 
@@ -122,9 +122,7 @@ class Spider:
 
 if __name__ == '__main__':
     db = DataBase()
+    db.createTable()
     spider = Spider()
     word = spider.request("luire")
-
-    print(1)
-    # frenchWord = spider.classTranfer(response)
-    # db.insertFrenchWord([frenchWord])
+    db.insert(word)

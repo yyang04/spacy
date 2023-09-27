@@ -51,19 +51,19 @@ class WordFrequency:
 
 if __name__ == '__main__':
     db = DataBase()
-    db.createTable()
+    # db.createTable()
     spider = Spider()
     wf = WordFrequency()
     word_count = wf.wordFrequencyFromPDF(output_path='data/word')
     i = 0
     wordEntityList = []
     for word, count in tqdm(word_count):
-        if i < 10:
+        if i >= 110:
+            break
+        elif i >= 100:
             wordEntity = spider.request(word)
             if wordEntity:
                 wordEntityList.append(wordEntity)
-        elif i >= 10:
-            break
         i += 1
     db.insert(wordEntityList)
 
