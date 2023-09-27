@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Float
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import relationship
@@ -20,33 +20,64 @@ class Word(Base):
     __tablename__ = 'word'
     id: Mapped[int] = mapped_column(primary_key=True)
     word: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    memory_score: Mapped[float] = mapped_column(Float(), nullable=True)
 
     definitions: Mapped[List['Definition']] = relationship(back_populates='word')  # ClassName,ColumnName
+    resources: Mapped[List['Resource']] = relationship(back_populates='word')
+    memory: Mapped['Memory'] = relationship(back_populates='word')
+
+    score: Mapped[float] = mapped_column(nullable=False, default=0.0)
+    is_exposed: Mapped[bool] = mapped_column(nullable=False, default=False)
+    is_memorized: Mapped[bool] = mapped_column(nullable=False, default=False)
+    half_life_days: Mapped[int] = mapped_column(nullable=False, default=1)
+
+
+class Resource(Base):
+    __tablename__ = 'resource'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    resource: Mapped[str] = mapped_column(String(100), nullable=False)
+    freq: Mapped[int] = mapped_column(nullable=True)
+
+    word_id: Mapped[int] = mapped_column(ForeignKey('word.id'))
+    word: Mapped['Word'] = relationship(back_populates='resources')
+
+
+class Memory(Base):
+    __tablename__ = 'memory'
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    word_id: Mapped[int] = mapped_column(ForeignKey('word.id'))
+    word: Mapped['Word'] = relationship(back_populates='memory')
 
 
 class Definition(Base):
     __tablename__ = 'definition'
     id: Mapped[int] = mapped_column(primary_key=True)
-    word: Mapped['Word'] = relationship(back_populates='definitions')
     definition: Mapped[str] = mapped_column(String(200), nullable=True)
     pos: Mapped[str] = mapped_column(String(50), nullable=True)
 
     word_id: Mapped[int] = mapped_column(ForeignKey('word.id'))  # tableName.columnName
+    word: Mapped['Word'] = relationship(back_populates='definitions')
     sentences: Mapped[List['Sentence']] = relationship(back_populates='definition')
 
 
 class Sentence(Base):
     __tablename__ = 'sentence'
     id: Mapped[int] = mapped_column(primary_key=True)
-    definition: Mapped['Definition'] = relationship(back_populates='sentences')
     sentence: Mapped[str] = mapped_column(String(200), nullable=True)
 
     definition_id: Mapped[int] = mapped_column(ForeignKey('definition.id'))
+    definition: Mapped['Definition'] = relationship(back_populates='sentences')
+
+
+class User(Base):
+    __tablename__ = 'user'
+    id: Mapped[int] = mapped_column(primary_key=True)
 
 
 class DataBase:
-    def __init__(self):
-        self.engine = create_engine('sqlite:///database.db', echo=True)
+    def __init__(self, path='sqlite:///database.db'):
+        self.engine = create_engine(path)
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
 
@@ -74,7 +105,9 @@ class DataBase:
 
 
 if __name__ == '__main__':
-    database = DataBase()
+    db = DataBase('sqlite:///../database.db')
+    db.search('rester')
+
 
 
 
