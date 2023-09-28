@@ -105,6 +105,7 @@ class Spider:
                         new_sentence.append(sentence)
                 definition.sentences = new_sentence
 
+
     def request(self, w, lock) -> Optional[Word]:
         if isinstance(w, str):
             word = Word()
