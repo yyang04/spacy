@@ -65,13 +65,13 @@ class WordFrequency:
                 word.word = wordStr
                 word.resources.append(resc)
                 missingWordList.append(self.spider.request(word))
-                print(word.word)
-                time.sleep(2)
-
-        print(f'exist: {len(existWordList)}')
-        print(f'not exist: {len(missingWordList)}')
+                print(word.word, end=' ')
+        print()
+        print(f'exist: {len(existWordList)}', end='')
+        print(f'not exist: {len(missingWordList)}', end='')
         total = existWordList + missingWordList
-        self.db.insert(total)
+
+        self.db.insert([item for item in total if item])
 
     @staticmethod
     def sanitized(word: str) -> bool:
@@ -90,7 +90,7 @@ class WordFrequency:
 if __name__ == '__main__':
     wf = WordFrequency()
     result = wf.wordFrequencyFromPDF("data/Les assassins de la 5e-B.csv", "data/Les assassins de la 5e-B.pdf")
-    for i in tqdm(range(200)):
+    for i in tqdm(range(7, 200)):
         wf.insertWordFrequency(result[20*i:20*i+20], "Les assassins de la 5e-B.pdf")
 
 
