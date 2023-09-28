@@ -20,7 +20,6 @@ class Word(Base):
     __tablename__ = 'word'
     id: Mapped[int] = mapped_column(primary_key=True)
     word: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-    memory_score: Mapped[float] = mapped_column(Float(), nullable=True)
 
     definitions: Mapped[List['Definition']] = relationship(back_populates='word')  # ClassName,ColumnName
     resources: Mapped[List['Resource']] = relationship(back_populates='word')
@@ -79,7 +78,7 @@ class DataBase:
     def __init__(self, path='sqlite:///database.db'):
         self.engine = create_engine(path)
         Session = sessionmaker(bind=self.engine)
-        self.session = Session()
+        self.session = Session(autocommit=True)
 
     def createTable(self):
         Base.metadata.create_all(self.engine)
@@ -105,9 +104,9 @@ class DataBase:
 
 
 if __name__ == '__main__':
-    db = DataBase('sqlite:///../database.db')
-    db.search('rester')
 
+    db = DataBase('sqlite:///../database.db')
+    db.createTable()
 
 
 
