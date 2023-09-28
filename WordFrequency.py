@@ -5,12 +5,15 @@ import os
 from pypdf import PdfReader
 from collections import Counter
 from typing import List, Tuple
-from threading import Thread
-from threading import Lock
+import logging
+import time
 
+from tqdm import tqdm
 
 from WordSpider import Spider
 from utils.database import Resource, DataBase, Word
+
+logging.disable(logging.DEBUG)
 
 
 class WordFrequency:
@@ -47,8 +50,6 @@ class WordFrequency:
     def insertWordFrequency(self, wordTuple: List[Tuple[str, int]], resource: str):
         existWordList = []
         missingWordList = []
-        threads = []
-        lock = Lock()
 
         for wordStr, freq in wordTuple:
             resc = Resource()
@@ -63,18 +64,12 @@ class WordFrequency:
                 word = Word()
                 word.word = wordStr
                 word.resources.append(resc)
-                missingWordList.append(word)
-                threads.append(Thread(target=self.spider.request, args=(word, lock)))
+                missingWordList.append(self.spider.request(word))
+                print(word.word)
+                time.sleep(2)
 
         print(f'exist: {len(existWordList)}')
         print(f'not exist: {len(missingWordList)}')
-
-        for thread in threads:
-            thread.start()
-
-        for thread in threads:
-            thread.join()
-
         total = existWordList + missingWordList
         self.db.insert(total)
 
@@ -95,7 +90,8 @@ class WordFrequency:
 if __name__ == '__main__':
     wf = WordFrequency()
     result = wf.wordFrequencyFromPDF("data/Les assassins de la 5e-B.csv", "data/Les assassins de la 5e-B.pdf")
-    wf.insertWordFrequency(result[0:100], "Les assassins de la 5e-B.pdf")
+    for i in tqdm(range(200)):
+        wf.insertWordFrequency(result[20*i:20*i+20], "Les assassins de la 5e-B.pdf")
 
 
 # if __name__ == '__main__':

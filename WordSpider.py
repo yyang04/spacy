@@ -19,7 +19,7 @@ class Spider:
         self.cookies = browser_cookie3.chrome()
         self.img2Cha = {}
 
-    def processResponse(self, word: Word, response: str, lock) -> None:
+    def processResponse(self, word: Word, response: str) -> None:
         data = etree.HTML(response).xpath("//div[@id='ExpFCChild'][1]/*")
 
         pos = ""
@@ -40,10 +40,9 @@ class Spider:
                     elif exp.tag == 'img':
                         url = exp.attrib.get('src')
                         rec_word = pic2word(self.ocr, url, self.cookies)
-                        with lock:
-                            char = self.img2Cha.get(url, rec_word)
-                            if char:
-                                self.img2Cha[url] = char
+                        char = self.img2Cha.get(url, rec_word)
+                        if char:
+                            self.img2Cha[url] = char
                         definition.definition += char
                     elif exp.attrib.get('class') == 'eg':
                         FOUND = True
@@ -62,10 +61,9 @@ class Spider:
                             elif eg.tag == 'img':
                                 url = eg.attrib.get('src')
                                 rec_word = pic2word(self.ocr, url, self.cookies)
-                                with lock:
-                                    char = self.img2Cha.get(url, rec_word)
-                                    if char:
-                                        self.img2Cha[url] = char
+                                char = self.img2Cha.get(url, rec_word)
+                                if char:
+                                    self.img2Cha[url] = char
                                 word.definitions[-1].sentences[-1].sentence += char
                         definition = Definition()
                         definition.pos = pos
@@ -89,10 +87,9 @@ class Spider:
                     elif eg.tag == 'img':
                         url = eg.attrib.get('src')
                         rec_word = pic2word(self.ocr, url, self.cookies)
-                        with lock:
-                            char = self.img2Cha.get(url, rec_word)
-                            if char:
-                                self.img2Cha[url] = char
+                        char = self.img2Cha.get(url, rec_word)
+                        if char:
+                            self.img2Cha[url] = char
                         word.definitions[-1].sentences[-1].sentence += char
             elif elem.text == '常见用法':
                 break
@@ -105,8 +102,7 @@ class Spider:
                         new_sentence.append(sentence)
                 definition.sentences = new_sentence
 
-
-    def request(self, w, lock) -> Optional[Word]:
+    def request(self, w) -> Optional[Word]:
         if isinstance(w, str):
             word = Word()
             word.word = w
@@ -119,7 +115,7 @@ class Spider:
             wordStr = word.word
             url = f"https://www.frdic.com/dicts/fr/{quote(wordStr)}"
             response = requests.get(url, cookies=self.cookies).text
-            self.processResponse(word, response, lock)
+            self.processResponse(word, response)
             return word
 
         except Exception as e:
